@@ -14,7 +14,6 @@ const HistoryList = [
     <!-- 标题 -->
     <div class="panel-title">
       <span class="title-text">历史对话</span>
-      <el-icon class="title-icon"><ArrowRight /></el-icon>
     </div>
 
     <!-- 新建对话按钮 -->
@@ -91,14 +90,6 @@ const HistoryList = [
   width: 18px;
   height: 18px;
   margin-right: 4px;
-}
-
-.history-list {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
 }
 
 /* 自定义滚动条 */

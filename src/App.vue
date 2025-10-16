@@ -14,7 +14,7 @@ import PanelChat from './components/PanelChat.vue'
       <el-main>
         <el-splitter>
           <!-- 左侧控制面板 -->
-          <el-splitter-panel size="20%">
+          <el-splitter-panel :collapsible="true" size="20%">
             <div class="left-panel">
               <!-- 对话历史记录 -->
               <PanelHistory />
