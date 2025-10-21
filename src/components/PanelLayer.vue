@@ -12,31 +12,31 @@ const mapStore = useMapStore()
     </div>
 
     <!-- 数据图层列表 -->
-    <el-scrollbar>
-      <div class="layer-list">
-        <!-- 底图选择器 -->
-        <div class="layer-group">
-          <div class="basemap-selector-group">
-            <div class="group-title">底图选择</div>
-            <el-select
-              v-model="mapStore.activeBasemapId"
-              placeholder="请选择底图"
-              class="basemap-select"
-              popper-class="basemap-popper"
-            >
-              <el-option
-                v-for="basemap in mapStore.basemaps"
-                :key="basemap.id"
-                :label="basemap.name"
-                :value="basemap.id"
-              />
-            </el-select>
-          </div>
+    <div class="layer-content">
+      <!-- 底图选择器 -->
+      <div class="layer-group">
+        <div class="basemap-selector-group">
+          <div class="group-title">底图选择</div>
+          <el-select
+            v-model="mapStore.activeBasemapId"
+            placeholder="请选择底图"
+            class="basemap-select"
+            popper-class="basemap-popper"
+          >
+            <el-option
+              v-for="basemap in mapStore.basemaps"
+              :key="basemap.id"
+              :label="basemap.name"
+              :value="basemap.id"
+            />
+          </el-select>
         </div>
+      </div>
 
-        <!-- 业务图层组 -->
-        <div class="layer-group" v-if="mapStore.geoJsonLayers.length > 0">
-          <div class="group-title">业务图层</div>
+      <!-- 业务图层组 -->
+      <div class="layer-group" v-if="mapStore.geoJsonLayers.length > 0">
+        <div class="group-title">业务图层</div>
+        <el-scrollbar class="layer-scrollbar">
           <div
             v-for="layer in mapStore.geoJsonLayers.sort((a, b) => b.order - a.order)"
             :key="layer.id"
@@ -46,9 +46,9 @@ const mapStore = useMapStore()
               {{ layer.name }}
             </el-checkbox>
           </div>
-        </div>
+        </el-scrollbar>
       </div>
-    </el-scrollbar>
+    </div>
   </div>
 </template>
 
@@ -76,11 +76,14 @@ const mapStore = useMapStore()
   font-size: 18px;
 }
 
-.layer-list {
+.layer-content {
   display: flex;
   flex-direction: column;
   gap: 12px;
   padding: 4px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 .layer-group {
   margin-bottom: 16px;
@@ -88,7 +91,6 @@ const mapStore = useMapStore()
 .basemap-popper {
   background-color: rgb(5, 87, 169) !important;
 }
-
 
 .basemap-selector-group {
   display: flex;
@@ -103,6 +105,11 @@ const mapStore = useMapStore()
   white-space: nowrap; /* 防止标题换行 */
 }
 
+.layer-scrollbar {
+  margin-top: 1px;
+  height: 300px; /* 给定一个合适的固定高度，超出时显示滚动条 */
+  overflow: auto;
+}
 /* el-select 输入框背景和边框 - 透明度 0.3 */
 :deep(.basemap-select) {
   width: 100%;
@@ -165,6 +172,7 @@ const mapStore = useMapStore()
   cursor: pointer;
   transition: all 0.3s ease;
   border: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 14px;
   margin-bottom: 14px;
 }
 
@@ -173,16 +181,41 @@ const mapStore = useMapStore()
   border-color: rgba(102, 126, 234, 0.3);
   transform: translateX(4px);
 }
+/* 自定义滚动条 */
+.layer-item::-webkit-scrollbar {
+  width: 4px;
+}
+
+.layer-item::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+}
+
+.layer-item::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
+
+.layer-item::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
 
 .layer-checkbox {
   padding-left: 14px;
   padding-right: 4px;
-  width: 100%;
+  font-size: 16px;
   color: #ffffff;
 }
 
 :deep(.el-checkbox__label) {
   color: #ffffff;
+  font-size: 16px;
+}
+
+:deep(.el-checkbox__input .el-checkbox__inner) {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
 }
 
 :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {

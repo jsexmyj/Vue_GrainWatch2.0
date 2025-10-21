@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@types/leaflet": "^1.9.21",
+    "axios": "^1.12.2",
     "element-plus": "^2.11.4",
     "leaflet": "^1.9.4",
     "pinia": "^3.0.3",

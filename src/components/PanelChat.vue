@@ -1,39 +1,106 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useMapStore } from '../stores/mapStore'
 
 // 模拟聊天数据
 const messages = ref([
   {
     id: 1,
     role: 'agent',
-    content: 'Hello! How can I help you today?使用 Element Plus 的 el-scrollbar 组件实现平滑滚动，自定义了滚动条样式',
-    timestamp: '10:30'
+    content: 'Hello! How can I help you today?',
+    timestamp: '10:30',
   },
   {
     id: 2,
     role: 'user',
     content: 'I need assistance with designing.',
-    timestamp: '10:31'
+    timestamp: '10:31',
   },
   {
     id: 3,
     role: 'agent',
     content: 'I Courte! Tell you more your design requirements.',
-    timestamp: '10:32'
+    timestamp: '10:32',
   },
-  {
-    id: 4,
-    role: 'agent',
-    content: '我已把 select 和 options 的样式全部改为“红底白字”，并做了以下具体修改与验证：',
-    timestamp: '10:32'
-  },
-  {
-    id: 5,
-    role: 'user',
-    content: '我已把 select 和 options 的样式全部改为“红底白将 Select 输入框（.basemap-select .el-input__wrapper）设为红色半透明ect 的 popper（下拉容器）添加 .basemap-popper 覆盖样式，背景同为 rgba(255,0,0,0.3)，并设置边框、模糊效果。背景：rgba(255,0,0,0.3)，边框 rgba(255,0,0,0.5)，文字白色字”，并做了以下具体修改与验证：',
-    timestamp: '10:34'
-  }
 ])
+
+// 输入与上传状态
+const inputMessage = ref('')
+const fileInput = ref<HTMLInputElement | null>(null)
+const uploadStatus = ref('')
+
+const mapStore = useMapStore()
+
+// 点击附加按钮：触发隐藏文件选择
+function onAttachClick() {
+  fileInput.value?.click()
+}
+
+// 处理文件选择
+async function onFileChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  const files = target.files
+  if (!files || files.length === 0) return
+  const file = files[0]
+  if (!file) return
+  await uploadFile(file)
+  // 清空选择，方便重复上传同一文件
+  target.value = ''
+}
+
+// 上传实现：POST 到 /api/upload，处理返回并加入 mapStore
+async function uploadFile(file: File) {
+  uploadStatus.value = 'uploading'
+  try {
+    const fd = new FormData()
+    fd.append('file', file)
+
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: fd,
+    })
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const data = await res.json()
+
+    if (data && data.status === 'success') {
+      const label: string = data.label || file.name
+      const geojson: GeoJSON.FeatureCollection = data.geojson
+      // 调用 mapStore 添加图层
+      try {
+        mapStore.addGeoJSONLayer(label, geojson)
+        console.log('Added GeoJSON layer:', label)
+      } catch (err) {
+        console.error('Failed to add geojson to store', err)
+      }
+      uploadStatus.value = 'success'
+    } else {
+      console.error('Upload API returned error', data)
+      uploadStatus.value = 'failed'
+    }
+  } catch (err) {
+    console.error('Upload failed', err)
+    uploadStatus.value = 'failed'
+  } finally {
+    // 在短时间后隐藏状态提示
+    setTimeout(() => {
+      uploadStatus.value = ''
+    }, 2000)
+  }
+}
+
+// 发送消息（将信息加入本地消息列表）
+function sendMessage() {
+  const text = inputMessage.value && inputMessage.value.trim()
+  if (!text) return
+  messages.value.push({
+    id: Date.now(),
+    role: 'user',
+    content: text,
+    timestamp: new Date().toLocaleTimeString(),
+  })
+  inputMessage.value = ''
+}
 </script>
 <template>
   <div class="panel-layer">
@@ -47,11 +114,7 @@ const messages = ref([
       <div class="panel-message">
         <el-scrollbar class="message-scrollbar">
           <div class="messages-container">
-            <div
-              v-for="msg in messages"
-              :key="msg.id"
-              :class="['message-item', msg.role]"
-            >
+            <div v-for="msg in messages" :key="msg.id" :class="['message-item', msg.role]">
               <div :class="['message-bubble', msg.role]">
                 {{ msg.content }}
               </div>
@@ -64,13 +127,18 @@ const messages = ref([
       <!-- 消息输入框 -->
       <div class="panel-input-wrapper">
         <div class="input-container">
-          <el-button
-            class="attach-btn"
-            circle
-            :icon="'Paperclip'"
-          >
+          <el-button class="attach-btn" circle :icon="'Paperclip'" @click="onAttachClick">
             <img src="../assets/附件.svg" class="icon-img" alt="上传文件" />
           </el-button>
+
+          <!-- 隐藏的文件输入 -->
+          <input
+            ref="fileInput"
+            type="file"
+            accept=".zip,application/zip,application/x-zip-compressed,application/json,application/geo+json"
+            style="display: none"
+            @change="onFileChange"
+          />
 
           <el-input
             v-model="inputMessage"
@@ -79,11 +147,18 @@ const messages = ref([
             clearable
           />
 
-          <el-button
-            class="send-btn"
-            circle
-            type="primary"
-          >
+          <!-- 上传状态提示 -->
+          <div class="upload-status" v-if="uploadStatus">
+            {{
+              uploadStatus === 'uploading'
+                ? '上传中...'
+                : uploadStatus === 'success'
+                  ? '上传成功'
+                  : '上传失败'
+            }}
+          </div>
+
+          <el-button class="send-btn" circle type="primary" @click="sendMessage">
             <img src="../assets/发送.svg" class="icon-img" alt="发送" />
           </el-button>
         </div>
@@ -249,6 +324,12 @@ const messages = ref([
 
 .message-input :deep(.el-input__inner::placeholder) {
   color: rgba(255, 255, 255, 0.6);
+}
+
+.upload-status {
+  color: #ffffff;
+  font-size: 12px;
+  margin-left: 8px;
 }
 
 @keyframes fadeIn {
