@@ -64,14 +64,19 @@ async function uploadFile(file: File) {
     const data = await res.json()
 
     if (data && data.status === 'success') {
-      const label: string = data.label || file.name
-      const geojson: GeoJSON.FeatureCollection = data.geojson
-      // 调用 mapStore 添加图层
-      try {
-        mapStore.addGeoJSONLayer(label, geojson)
-        console.log('Added GeoJSON layer:', label)
-      } catch (err) {
-        console.error('Failed to add geojson to store', err)
+      // 处理批量上传结果
+      const files = data.files || []
+      for (const result of files) {
+        const label: string = result.label || file.name
+        const geojson: GeoJSON.FeatureCollection = result.geojson
+        // 调用 mapStore 添加图层
+        try {
+          console.log('Adding layer from backend:', label, geojson)
+          mapStore.addGeoJSONLayer(label, geojson)
+          console.log('Added GeoJSON layer:', label)
+        } catch (err) {
+          console.error('Failed to add geojson to store', err)
+        }
       }
       uploadStatus.value = 'success'
     } else {

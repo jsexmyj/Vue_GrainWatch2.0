@@ -5,7 +5,7 @@ import logoUrl from '../assets/logo.png'
   <div class="header">
     <div class="header-logo">
       <el-avatar shape="square" :size="30" :src="logoUrl" />
-      <div class="logo-title">GeoMind</div>
+      <div class="logo-title">GrainWatch</div>
     </div>
     <el-divider direction="vertical" />
     <div class="header-content">桌面工作台</div>

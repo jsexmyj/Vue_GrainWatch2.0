@@ -52,6 +52,7 @@ export const useMapStore = defineStore('map', {
     // 业务图层
     geoJsonLayers: [] as GeoJsonLayerState[],
     nextLayerOrder: 1,
+    nextLayerId: 0, // 添加自增ID计数器
   }),
 
   actions: {
@@ -70,7 +71,8 @@ export const useMapStore = defineStore('map', {
 
     // 添加 GeoJSON 图层
     addGeoJSONLayer(name: string, data: GeoJSON.FeatureCollection) {
-      const id = `geojson-${Date.now()}`
+      // 使用时间戳和自增ID保证唯一性
+      const id = `geojson-${Date.now()}-${++this.nextLayerId}`
       this.geoJsonLayers.push({
         id,
         name, // 使用传入的文件名
@@ -79,6 +81,7 @@ export const useMapStore = defineStore('map', {
         data,
         order: this.nextLayerOrder++, // 顺序增加
       })
+      console.log('Added to store:', id, name)
     },
   },
 })

@@ -1,9 +1,21 @@
 <script setup lang="ts">
 import { useMapStore } from '../stores/mapStore'
+import * as L from 'leaflet'
 
 const mapStore = useMapStore()
-</script>
 
+// 缩放到图层范围
+const zoomToLayer = (geojson: GeoJSON.FeatureCollection) => {
+  // 使用 Leaflet 的 geoJSON 计算边界
+  const bounds = new L.GeoJSON(geojson).getBounds()
+  // 发出事件，让 MapView 组件处理缩放
+  window.dispatchEvent(
+    new CustomEvent('zoom-to-bounds', {
+      detail: { bounds },
+    }),
+  )
+}
+</script>
 <template>
   <div class="panel-layer">
     <!-- 标题 -->
@@ -45,6 +57,13 @@ const mapStore = useMapStore()
             <el-checkbox v-model="layer.visible" class="layer-checkbox">
               {{ layer.name }}
             </el-checkbox>
+            <img
+              src="../assets/缩放.svg"
+              class="scale-icon"
+              alt="缩放到图层"
+              @click="zoomToLayer(layer.data)"
+              title="缩放到图层范围"
+            />
           </div>
         </el-scrollbar>
       </div>
@@ -169,11 +188,14 @@ const mapStore = useMapStore()
   padding: 7px;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 8px;
-  cursor: pointer;
   transition: all 0.3s ease;
   border: 1px solid rgba(255, 255, 255, 0.06);
   margin-top: 14px;
   margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 5px;
 }
 
 .layer-item:hover {
@@ -205,8 +227,23 @@ const mapStore = useMapStore()
   padding-right: 4px;
   font-size: 16px;
   color: #ffffff;
+  flex: 1;
+  min-width: 0;
 }
 
+:deep(.layer-checkbox .el-checkbox__label) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scale-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 20px;
+  cursor: pointer;
+  filter: brightness(0) invert(1);
+}
 :deep(.el-checkbox__label) {
   color: #ffffff;
   font-size: 16px;
